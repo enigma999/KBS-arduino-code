@@ -1,6 +1,6 @@
 //includes
 #include <Wire.h>
-
+//hoi
 
 //global variables
 int directionPin[] = { 12, 13 };
