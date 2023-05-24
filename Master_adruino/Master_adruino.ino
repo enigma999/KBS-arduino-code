@@ -1,6 +1,5 @@
 //includes
 #include <Wire.h>
-//hoi
 
 //global variables
 int directionPin[] = { 12, 13 };
@@ -38,13 +37,13 @@ void setup() {
   pinSetup();
 
   //calibrate X
-  calibrate();
+  calibrateX(motorPin[0],directionPin[0]);
 }
 
-void calibrate() {
+void calibrateX(int motorPin,int dirPin) {
   //turn on motor
-  digitalWrite(directionPin[0], HIGH);
-  digitalWrite(motorPin[0], HIGH);
+  digitalWrite(dirPin, HIGH);
+  digitalWrite(motorPin, HIGH);
   int oldXPos = 0;
   int start = millis();
   while (true) {
@@ -58,7 +57,7 @@ void calibrate() {
     }
   }
   //turn off motor
-  digitalWrite(motorPin[0], LOW);
+  digitalWrite(motorPin, LOW);
   start = millis();
   while (millis() < start + 100) {
   }
@@ -90,13 +89,14 @@ void countpluse() {
 void loop() {
   //clear comunication
   //read wire
+
   readSerial();
   handleSerialResponse();
   //read joystick input
   joystickY = analogRead(A3);
   joystickX = analogRead(A2);
 
- 
+
 
   switch (mode) {
     case STOP:
@@ -126,7 +126,6 @@ void loop() {
 }
 
 void ModeLED(int modeNumber) {
-  Serial.println(modeNumber);
   switch (modeNumber) {
     case 1:
       digitalWrite(LED[0], HIGH);
@@ -171,6 +170,13 @@ void manualLoop() {
     digitalWrite(motorPin[0], LOW);
   }
   //z
+  if (joystickX < 400) {
+    sendWire("a");
+  } else if (joystickX > 800) {
+    sendWire("v");
+  } else {
+    sendWire("s");
+  }
 }
 
 void automaticLoop() {
@@ -187,8 +193,8 @@ void readSerial() {
   if (Serial.available() > 0) {
     command = Serial.readString();
     command.trim();
+    Serial.println(command);
   }
-  Serial.println(command);
 }
 
 void handleSerialResponse() {
@@ -219,4 +225,10 @@ void sendData(String message) {
     message += ' ';
   }
   Wire.write(message.c_str(), message.length());  // Send the message to the master
+}
+
+void sendWire(String message) {
+  Wire.beginTransmission(2);
+  Wire.write(message.c_str());
+  Wire.endTransmission();
 }
