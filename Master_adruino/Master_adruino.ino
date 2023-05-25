@@ -37,10 +37,10 @@ void setup() {
   pinSetup();
 
   //calibrate X
-  calibrateX(motorPin[0],directionPin[0]);
+  calibrateX(motorPin[0], directionPin[0]);
 }
 
-void calibrateX(int motorPin,int dirPin) {
+void calibrateX(int motorPin, int dirPin) {
   //turn on motor
   digitalWrite(dirPin, HIGH);
   digitalWrite(motorPin, HIGH);
@@ -149,34 +149,34 @@ void stopLoop() {
 }
 
 void manualLoop() {
+String  wireMessage="";
+  //X
+  // if (joystickX < 400) {
+  //   digitalWrite(directionPin[0], HIGH);
+  //   digitalWrite(motorPin[0], HIGH);
+  // } else if (joystickX > 800) {
+  //   digitalWrite(directionPin[0], LOW);
+  //   digitalWrite(motorPin[0], HIGH);
+  // } else {
+  //   digitalWrite(motorPin[0], LOW);
+  // }
   //Y
   if (joystickY < 400) {
-    digitalWrite(directionPin[1], LOW);
-    digitalWrite(motorPin[1], HIGH);
+    wireMessage.concat("Y-");
   } else if (joystickY > 800) {
-    digitalWrite(directionPin[1], HIGH);
-    digitalWrite(motorPin[1], HIGH);
+    wireMessage.concat("Y+");
   } else {
-    digitalWrite(motorPin[1], LOW);
+    wireMessage.concat("YS");
   }
-  //X
-  if (joystickX < 400) {
-    digitalWrite(directionPin[0], HIGH);
-    digitalWrite(motorPin[0], HIGH);
+  // Z
+   if (joystickX < 400) {
+    wireMessage.concat("Z-");
   } else if (joystickX > 800) {
-    digitalWrite(directionPin[0], LOW);
-    digitalWrite(motorPin[0], HIGH);
+    wireMessage.concat("Z+");
   } else {
-    digitalWrite(motorPin[0], LOW);
+    wireMessage.concat("ZS");
   }
-  //z
-  if (joystickX < 400) {
-    sendWire("a");
-  } else if (joystickX > 800) {
-    sendWire("v");
-  } else {
-    sendWire("s");
-  }
+  sendWire(wireMessage);
 }
 
 void automaticLoop() {
