@@ -66,18 +66,18 @@ void calibrateX(int motorPin, int dirPin) {
 }
 
 void pinSetup() {
-  pinMode(motorPin[1], OUTPUT);
+  //zet alle nodige pinmodes
+  //stoplicht leds
   pinMode(LED[0], OUTPUT);
   pinMode(LED[1], OUTPUT);
   pinMode(LED[2], OUTPUT);
-  pinMode(directionPin[1], OUTPUT);
+  //x as motor
   pinMode(motorPin[0], OUTPUT);
   pinMode(directionPin[0], OUTPUT);
-  pinMode(7, INPUT_PULLUP);
-  pinMode(10, INPUT_PULLUP);
 }
 
 void countpluse() {
+  //deze functie zorgt er voor dat de xpos altijd door de encoder wordt bijgehouden
   if (digitalRead(directionPin[1]) == HIGH) {
     Xpos--;
   } else {
@@ -87,16 +87,12 @@ void countpluse() {
 
 
 void loop() {
-  //clear comunication
-  //read wire
 
   readSerial();
   handleSerialResponse();
   //read joystick input
   joystickY = analogRead(A3);
   joystickX = analogRead(A2);
-
-
 
   switch (mode) {
     case STOP:
@@ -106,7 +102,6 @@ void loop() {
 
     case MAN:
       ModeLED(2);
-      pinMode(LED[1], HIGH);
       manualLoop();
       break;
 
@@ -146,10 +141,14 @@ void ModeLED(int modeNumber) {
 }
 
 void stopLoop() {
+  //dit is de mode voor de noodstop deze zet alle motoren uit
+  digitalWrite(motorPin[0], LOW);
+  sendWire("YSZS");
 }
 
 void manualLoop() {
-String  wireMessage="";
+  //dit is de mode voor handmatige besturing
+  String wireMessage = "";
   //X
   if (joystickX < 400) {
     digitalWrite(directionPin[0], HIGH);
@@ -169,7 +168,7 @@ String  wireMessage="";
     wireMessage.concat("YS");
   }
   // Z
-   if (joystickX < 400) {
+  if (joystickX < 400) {
     wireMessage.concat("Z-");
   } else if (joystickX > 800) {
     wireMessage.concat("Z+");
@@ -189,7 +188,7 @@ void SerialDebugger() {
 }
 
 void readSerial() {
-
+  //leest de serialcomm uit en stopt het binnenkomende command in de command variable
   if (Serial.available() > 0) {
     command = Serial.readString();
     command.trim();
@@ -198,6 +197,7 @@ void readSerial() {
 }
 
 void handleSerialResponse() {
+  //leest de command variable en handelt deze af
   if (command == "n") {
     mode = STOP;
     pinMode(LED[0], LOW);
@@ -219,15 +219,8 @@ void handleSerialResponse() {
   command = "";
 }
 
-
-void sendData(String message) {
-  while (message.length() < 30) {
-    message += ' ';
-  }
-  Wire.write(message.c_str(), message.length());  // Send the message to the master
-}
-
 void sendWire(String message) {
+  //verzend een string naar de adruino met adress 2
   Wire.beginTransmission(2);
   Wire.write(message.c_str());
   Wire.endTransmission();
