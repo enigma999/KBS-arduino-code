@@ -151,15 +151,15 @@ void stopLoop() {
 void manualLoop() {
 String  wireMessage="";
   //X
-  // if (joystickX < 400) {
-  //   digitalWrite(directionPin[0], HIGH);
-  //   digitalWrite(motorPin[0], HIGH);
-  // } else if (joystickX > 800) {
-  //   digitalWrite(directionPin[0], LOW);
-  //   digitalWrite(motorPin[0], HIGH);
-  // } else {
-  //   digitalWrite(motorPin[0], LOW);
-  // }
+  if (joystickX < 400) {
+    digitalWrite(directionPin[0], HIGH);
+    digitalWrite(motorPin[0], HIGH);
+  } else if (joystickX > 800) {
+    digitalWrite(directionPin[0], LOW);
+    digitalWrite(motorPin[0], HIGH);
+  } else {
+    digitalWrite(motorPin[0], LOW);
+  }
   //Y
   if (joystickY < 400) {
     wireMessage.concat("Y-");
