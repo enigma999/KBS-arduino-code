@@ -1,7 +1,7 @@
-//includes
+//Includes
 #include <Wire.h>
 
-//global variables
+//Global variables
 int directionPin[] = { 12, 13 };
 int motorPin[] = { 3, 11 };
 int BrakePin[] = { 9, 8 };
@@ -9,9 +9,9 @@ int motorCurrentPin[] = { A1, A0 };
 int YmovementPin = 2;
 int sensorPin = A2;
 String command;
+bool debug = false;
 int Ypos = 0;
 int Zpos = 0;
-
 enum modes {
   VOOR,
   ACHTER,
@@ -26,21 +26,64 @@ void setup() {
   Wire.onReceive(receiveEvent);
   Serial.begin(9600);
 
-  //pin setup
-  pinMode(11, OUTPUT);
-  pinMode(13, OUTPUT);
+  //Pin setup
+  pinSetup();
 
+  //Setup interrupt for Y 
   attachInterrupt(digitalPinToInterrupt(YmovementPin), countpluse, RISING);
   calibrateY(motorPin[0], directionPin[0]);
   calibrateZ(motorPin[1], directionPin[1]);
 }
 
-void loop() {
+void calibrateY(int motorPin, int dirPin) {
+  //Turn on motor
+  digitalWrite(dirPin, HIGH);
+  digitalWrite(motorPin, HIGH);
+  int oldYPos = 0;
+  int start = millis();
+  while (true) {
+    if (millis() > start + 100) {
+      if (oldYPos == Ypos) {
+        break;
+      } else {
+        start = millis();
+        oldYPos = Ypos;
+      }
+    }
+  }
+  //Turn off motor
+  digitalWrite(motorPin, LOW);
+  start = millis();
+  while (millis() < start + 100) {
+  }
+  Ypos = 0;
+  Serial.println("calibration succesfull");
+}
 
-  delay(100);
-  if (command.length() > 0) {
-    Serial.println(command);
-  };
+void calibrateZ(int motorPin, int dirPin) {
+  while (readSensor() < 620) {
+    digitalWrite(dirPin, HIGH);
+    digitalWrite(motorPin, HIGH);
+  }
+}
+
+void countpluse() {
+  if (digitalRead(directionPin[1]) == HIGH) {
+    Ypos--;
+  } else {
+    Ypos++;
+  }
+}
+
+void receiveEvent(int howMany) {
+  command = "";
+  while (0 < Wire.available()) {
+    char c = Wire.read();
+    command += c;
+  }
+}
+
+void loop() {
   handleCommand();
 
   switch (ymode) {
@@ -59,7 +102,7 @@ void loop() {
       break;
 
     default:
-      Serial.println("no mode of operation found");
+      Serial.println("no mode of operation found for y-axis");
     
       break;
   }
@@ -88,57 +131,19 @@ void loop() {
       break;
 
     default:
-      Serial.println("no mode of operation found");
+      Serial.println("no mode of operation found for z-axis");
       break;
   }
-  //read wire
-
-
-  //execute cmd
-
-  //return response
-}
-
-void calibrateY(int motorPin, int dirPin) {
-  //turn on motor
-  digitalWrite(dirPin, HIGH);
-  digitalWrite(motorPin, HIGH);
-  int oldYPos = 0;
-  int start = millis();
-  while (true) {
-    if (millis() > start + 100) {
-      if (oldYPos == Ypos) {
-        break;
-      } else {
-        start = millis();
-        oldYPos = Ypos;
-      }
-    }
-  }
-  //turn off motor
-  digitalWrite(motorPin, LOW);
-  start = millis();
-  while (millis() < start + 100) {
-  }
-  Ypos = 0;
-  Serial.println("calibration succesfull");
-}
-
-void calibrateZ(int motorPin, int dirPin) {
-  while (readSensor() < 620) {
-    digitalWrite(dirPin, HIGH);
-    digitalWrite(motorPin, HIGH);
+  //debug
+   if (debug == true) {
+    SerialDebugger();
   }
 }
 
-void countpluse() {
-  if (digitalRead(directionPin[1]) == HIGH) {
-    Ypos--;
-  } else {
-    Ypos++;
-  }
+void pinSetup(){
+  pinMode(motorPin[1], OUTPUT);
+  pinMode(directionPin[1], OUTPUT);
 }
-
 
 void handleCommand() {
   String Y = command.substring(0, 2);
@@ -170,10 +175,8 @@ int readSensor() {
   return analogRead(sensorPin);
 }
 
-void receiveEvent(int howMany) {
-  command = "";
-  while (0 < Wire.available()) {
-    char c = Wire.read();
-    command += c;
+void SerialDebugger() {
+  if (command.length() > 0) {
+    Serial.println(command);
   }
 }
