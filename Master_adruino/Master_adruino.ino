@@ -15,6 +15,8 @@ int joystickY;
 int joystickX;
 int xGoTo;
 int yGoTo;
+int offsetX=500;
+int cellwidth=50;
 bool debug = false;
 String wireResponse;
 String command;
@@ -200,8 +202,8 @@ void readSerial() {
     String* commandArr = split(command);
     if (commandArr[0] == "c") {
       command = commandArr[0];
-      xGoTo = commandArr[1];
-      yGoTo = commandArr[2];
+      xGoTo = commandArr[1].toInt();
+      yGoTo = commandArr[2].toInt();
     } else {
       command = commandArr[0];
     }
@@ -264,4 +266,10 @@ void sendWire(String message) {
   Wire.beginTransmission(2);
   Wire.write(message.c_str());
   Wire.endTransmission();
+}
+
+int calculateXpos(int coordinaat){
+  //geeft de encoder positie voor een gegeven coordinaat
+  int positie=offsetX+(cellwidth*(coordinaat));
+  return positie;
 }
