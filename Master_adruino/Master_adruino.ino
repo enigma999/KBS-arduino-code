@@ -212,13 +212,15 @@ void readSerial() {
   }
 }
 
+
+//split een string met spaties en zet deze in een array. Als er geen spaties zijn heb je een array van lengte 1 met de string
 String* split(String str) {
   String strs[3];
   int StringCount = 0;
   while (str.length() > 0)
   {
     int index = str.indexOf(' ');
-    if (index == -1) // No space found
+    if (index == -1) //geen spatie
     {
       strs[StringCount++] = str;
       break;
