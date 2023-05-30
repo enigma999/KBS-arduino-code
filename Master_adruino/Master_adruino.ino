@@ -15,8 +15,10 @@ int joystickY;
 int joystickX;
 int xGoTo;
 int yGoTo;
-int offsetX=500;
-int cellwidth=50;
+int offsetX = 1700;  // offset from the start of the rail  to the middle of the first cell
+int cellwidth = 700;
+int offsetY = 500;  // offset from the bottom to the pickuphight for the first pakkage
+int cellHeight = 50;
 bool debug = false;
 String wireResponse;
 String command;
@@ -44,6 +46,8 @@ void setup() {
 
   //calibrate X
   calibrateX(motorPin[0], directionPin[0]);
+
+  xGoTo=calculateXpos(0);
 }
 
 void calibrateX(int motorPin, int dirPin) {
@@ -84,7 +88,7 @@ void pinSetup() {
 
 void countpluse() {
   //deze functie zorgt er voor dat de xpos altijd door de encoder wordt bijgehouden
-  if (digitalRead(directionPin[1]) == HIGH) {
+  if (digitalRead(directionPin[0]) == HIGH) {
     Xpos--;
   } else {
     Xpos++;
@@ -174,17 +178,27 @@ void manualLoop() {
     wireMessage.concat("YS");
   }
   // Z
-  if (joystickX < 400) {
-    wireMessage.concat("Z-");
-  } else if (joystickX > 800) {
-    wireMessage.concat("Z+");
-  } else {
-    wireMessage.concat("ZS");
-  }
+  // if (joystickX < 400) {
+  //   wireMessage.concat("Z-");
+  // } else if (joystickX > 800) {
+  //   wireMessage.concat("Z+");
+  // } else {
+  //   wireMessage.concat("ZS");
+  // }
+  wireMessage.concat("ZS");
   sendWire(wireMessage);
 }
 
 void automaticLoop() {
+  if (xGoTo > Xpos) {
+    digitalWrite(directionPin[0], LOW);
+    digitalWrite(motorPin[0], HIGH);
+  } else if (xGoTo < Xpos) {
+    digitalWrite(directionPin[0], HIGH);
+    digitalWrite(motorPin[0], HIGH);
+  } else {
+    digitalWrite(motorPin[0], LOW);
+  }
 }
 
 
@@ -199,18 +213,15 @@ void readSerial() {
     command = Serial.readString();
     command.trim();
 
-    String* commandArr = split(command);
-    if (commandArr[0] == "c") {
-      command = commandArr[0];
-      xGoTo = commandArr[1].toInt();
-      yGoTo = commandArr[2].toInt();
-    } else {
-      command = commandArr[0];
-    }
-
-
-
-
+    // String* commandArr = split(command);
+    // if (commandArr[0] == "c") {
+    //   command = commandArr[0];
+    //   xGoTo = commandArr[1].toInt();
+    //   yGoTo = commandArr[2].toInt();
+    // } else {
+    //   command = commandArr[0];
+    // }
+    // Serial.println(command);
   }
 }
 
@@ -219,23 +230,18 @@ void readSerial() {
 String* split(String str) {
   String strs[3];
   int StringCount = 0;
-  while (str.length() > 0)
-  {
+  while (str.length() > 0) {
     int index = str.indexOf(' ');
-    if (index == -1) //geen spatie
+    if (index == -1)  //geen spatie
     {
       strs[StringCount++] = str;
       break;
-    }
-    else
-    {
+    } else {
       strs[StringCount++] = str.substring(0, index);
-      str = str.substring(index+1);
+      str = str.substring(index + 1);
     }
-
   }
   return strs;
-
 }
 
 void handleSerialResponse() {
@@ -268,8 +274,14 @@ void sendWire(String message) {
   Wire.endTransmission();
 }
 
-int calculateXpos(int coordinaat){
-  //geeft de encoder positie voor een gegeven coordinaat
-  int positie=offsetX+(cellwidth*(coordinaat));
+int calculateXpos(int coordinaat) {
+  //geeft de encoder Xpositie voor een gegeven coordinaat
+  int positie = offsetX + (cellwidth * (coordinaat));
+  return positie;
+}
+
+int calculateYpos(int coordinaat) {
+  //geeft de encoder Ypositie voor een gegeven coordinaat
+  int positie = offsetY + (cellHeight * (coordinaat));
   return positie;
 }
