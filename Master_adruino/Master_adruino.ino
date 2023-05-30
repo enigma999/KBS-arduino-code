@@ -1,7 +1,9 @@
 //includes
 #include <Wire.h>
 
+
 //hoi
+
 
 //global variables
 int directionPin[] = { 12, 13 };
@@ -41,13 +43,13 @@ void setup() {
   pinSetup();
 
   //calibrate X
-  calibrate();
+  calibrateX(motorPin[0], directionPin[0]);
 }
 
-void calibrate() {
+void calibrateX(int motorPin, int dirPin) {
   //turn on motor
-  digitalWrite(directionPin[0], HIGH);
-  digitalWrite(motorPin[0], HIGH);
+  digitalWrite(dirPin, HIGH);
+  digitalWrite(motorPin, HIGH);
   int oldXPos = 0;
   int start = millis();
   while (true) {
@@ -61,7 +63,7 @@ void calibrate() {
     }
   }
   //turn off motor
-  digitalWrite(motorPin[0], LOW);
+  digitalWrite(motorPin, LOW);
   start = millis();
   while (millis() < start + 100) {
   }
@@ -70,18 +72,18 @@ void calibrate() {
 }
 
 void pinSetup() {
-  pinMode(motorPin[1], OUTPUT);
+  //zet alle nodige pinmodes
+  //stoplicht leds
   pinMode(LED[0], OUTPUT);
   pinMode(LED[1], OUTPUT);
   pinMode(LED[2], OUTPUT);
-  pinMode(directionPin[1], OUTPUT);
+  //x as motor
   pinMode(motorPin[0], OUTPUT);
   pinMode(directionPin[0], OUTPUT);
-  pinMode(7, INPUT_PULLUP);
-  pinMode(10, INPUT_PULLUP);
 }
 
 void countpluse() {
+  //deze functie zorgt er voor dat de xpos altijd door de encoder wordt bijgehouden
   if (digitalRead(directionPin[1]) == HIGH) {
     Xpos--;
   } else {
@@ -91,15 +93,12 @@ void countpluse() {
 
 
 void loop() {
-  //clear comunication
-  //read wire
+
   readSerial();
   handleSerialResponse();
   //read joystick input
   joystickY = analogRead(A3);
   joystickX = analogRead(A2);
-
- 
 
   switch (mode) {
     case STOP:
@@ -109,7 +108,6 @@ void loop() {
 
     case MAN:
       ModeLED(2);
-      pinMode(LED[1], HIGH);
       manualLoop();
       break;
 
@@ -129,7 +127,6 @@ void loop() {
 }
 
 void ModeLED(int modeNumber) {
-  Serial.println(modeNumber);
   switch (modeNumber) {
     case 1:
       digitalWrite(LED[0], HIGH);
@@ -150,19 +147,14 @@ void ModeLED(int modeNumber) {
 }
 
 void stopLoop() {
+  //dit is de mode voor de noodstop deze zet alle motoren uit
+  digitalWrite(motorPin[0], LOW);
+  sendWire("YSZS");
 }
 
 void manualLoop() {
-  //Y
-  if (joystickY < 400) {
-    digitalWrite(directionPin[1], LOW);
-    digitalWrite(motorPin[1], HIGH);
-  } else if (joystickY > 800) {
-    digitalWrite(directionPin[1], HIGH);
-    digitalWrite(motorPin[1], HIGH);
-  } else {
-    digitalWrite(motorPin[1], LOW);
-  }
+  //dit is de mode voor handmatige besturing
+  String wireMessage = "";
   //X
   if (joystickX < 400) {
     digitalWrite(directionPin[0], HIGH);
@@ -173,7 +165,23 @@ void manualLoop() {
   } else {
     digitalWrite(motorPin[0], LOW);
   }
-  //z
+  //Y
+  if (joystickY < 400) {
+    wireMessage.concat("Y-");
+  } else if (joystickY > 800) {
+    wireMessage.concat("Y+");
+  } else {
+    wireMessage.concat("YS");
+  }
+  // Z
+  if (joystickX < 400) {
+    wireMessage.concat("Z-");
+  } else if (joystickX > 800) {
+    wireMessage.concat("Z+");
+  } else {
+    wireMessage.concat("ZS");
+  }
+  sendWire(wireMessage);
 }
 
 void automaticLoop() {
@@ -186,10 +194,11 @@ void SerialDebugger() {
 }
 
 void readSerial() {
-
+  //leest de serialcomm uit en stopt het binnenkomende command in de command variable
   if (Serial.available() > 0) {
     command = Serial.readString();
     command.trim();
+
     String* commandArr = split(command);
     if (commandArr[0] == "c") {
       command = commandArr[0];
@@ -201,8 +210,8 @@ void readSerial() {
 
 
 
+
   }
-  Serial.println(command);
 }
 
 String* split(String str) {
@@ -228,6 +237,7 @@ String* split(String str) {
 }
 
 void handleSerialResponse() {
+  //leest de command variable en handelt deze af
   if (command == "n") {
     mode = STOP;
     pinMode(LED[0], LOW);
@@ -249,10 +259,9 @@ void handleSerialResponse() {
   command = "";
 }
 
-
-void sendData(String message) {
-  while (message.length() < 30) {
-    message += ' ';
-  }
-  Wire.write(message.c_str(), message.length());  // Send the message to the master
+void sendWire(String message) {
+  //verzend een string naar de adruino met adress 2
+  Wire.beginTransmission(2);
+  Wire.write(message.c_str());
+  Wire.endTransmission();
 }
