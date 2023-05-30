@@ -68,7 +68,7 @@ void calibrateZ(int motorPin, int dirPin) {
 }
 
 void countpluse() {
-  if (digitalRead(directionPin[1]) == HIGH) {
+  if (digitalRead(directionPin[0]) == HIGH) {
     Ypos--;
   } else {
     Ypos++;
@@ -85,6 +85,7 @@ void receiveEvent(int howMany) {
 
 void loop() {
   handleCommand();
+  sendWire(String(Ypos));
 
   switch (ymode) {
     case VOOR:
@@ -109,7 +110,7 @@ void loop() {
 
   switch (zmode) {
     case VOOR:
-      if (readSensor() > 375) {
+      if (readSensor() > 370) {
         digitalWrite(directionPin[1], LOW);
         digitalWrite(motorPin[1], HIGH);
       } else {
@@ -147,9 +148,9 @@ void pinSetup(){
 
 void handleCommand() {
   String Y = command.substring(0, 2);
-  Serial.println(Y);
+  //Serial.println(Y);
   String Z = command.substring(2, 4);
-  Serial.println(Z);
+  //Serial.println(Z);
   if (Y == "Y+") {
     ymode = VOOR;
   }
@@ -179,4 +180,11 @@ void SerialDebugger() {
   if (command.length() > 0) {
     Serial.println(command);
   }
+}
+
+void sendWire(String message) {
+  //verzend een string naar de adruino met adress 2
+  Wire.beginTransmission(1);
+  Wire.write(message.c_str());
+  Wire.endTransmission();
 }
