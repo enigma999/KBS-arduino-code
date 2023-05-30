@@ -1,5 +1,6 @@
 //includes
 #include <Wire.h>
+
 //hoi
 
 //global variables
@@ -12,6 +13,8 @@ int XmovementPin = 2;
 int Xpos = 0;
 int joystickY;
 int joystickX;
+int xGoTo;
+int yGoTo;
 bool debug = false;
 String wireResponse;
 String command;
@@ -187,8 +190,41 @@ void readSerial() {
   if (Serial.available() > 0) {
     command = Serial.readString();
     command.trim();
+    String* commandArr = split(command);
+    if (commandArr[0] == "c") {
+      command = commandArr[0];
+      xGoTo = commandArr[1];
+      yGoTo = commandArr[2];
+    } else {
+      command = commandArr[0];
+    }
+
+
+
   }
   Serial.println(command);
+}
+
+String* split(String str) {
+  String strs[3];
+  int StringCount = 0;
+  while (str.length() > 0)
+  {
+    int index = str.indexOf(' ');
+    if (index == -1) // No space found
+    {
+      strs[StringCount++] = str;
+      break;
+    }
+    else
+    {
+      strs[StringCount++] = str.substring(0, index);
+      str = str.substring(index+1);
+    }
+
+  }
+  return strs;
+
 }
 
 void handleSerialResponse() {
