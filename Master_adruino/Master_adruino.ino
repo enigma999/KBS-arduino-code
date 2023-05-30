@@ -1,6 +1,8 @@
 //includes
 #include <Wire.h>
 
+
+
 //global variables
 int directionPin[] = { 12, 13 };
 int motorPin[] = { 3, 11 };
@@ -11,6 +13,8 @@ int XmovementPin = 2;
 int Xpos = 0;
 int joystickY;
 int joystickX;
+int xGoTo;
+int yGoTo;
 bool debug = false;
 String wireResponse;
 String command;
@@ -192,8 +196,44 @@ void readSerial() {
   if (Serial.available() > 0) {
     command = Serial.readString();
     command.trim();
-    Serial.println(command);
+
+    String* commandArr = split(command);
+    if (commandArr[0] == "c") {
+      command = commandArr[0];
+      xGoTo = commandArr[1];
+      yGoTo = commandArr[2];
+    } else {
+      command = commandArr[0];
+    }
+
+
+
+
   }
+}
+
+
+//split een string met spaties en zet deze in een array. Als er geen spaties zijn heb je een array van lengte 1 met de string
+String* split(String str) {
+  String strs[3];
+  int StringCount = 0;
+  while (str.length() > 0)
+  {
+    int index = str.indexOf(' ');
+    if (index == -1) //geen spatie
+    {
+      strs[StringCount++] = str;
+      break;
+    }
+    else
+    {
+      strs[StringCount++] = str.substring(0, index);
+      str = str.substring(index+1);
+    }
+
+  }
+  return strs;
+
 }
 
 void handleSerialResponse() {
