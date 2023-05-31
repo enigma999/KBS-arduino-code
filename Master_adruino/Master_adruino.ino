@@ -4,6 +4,7 @@
 
 
 //global variables
+bool onLocation = false;
 int size = 0;
 int directionPin[] = { 12, 13 };
 int motorPin[] = { 3, 11 };
@@ -229,7 +230,19 @@ void automaticLoop() {
   } else {
     wireMessage.concat("ZS");
   }
+  if ((abs(yGoTo - Ypos) <= 10) && (abs(xGoTo - Xpos) <= 10)) {
+    if (!onLocation) {
+      Serial.println("Gelukt");
+      onLocation = true;
+    }
+  }
+  // if (yGoTo - 10 > Ypos) {
+  //     Serial.println("gelukt");
+  // }
+
+
   sendWire(wireMessage);
+  
 }
 
 void handleWireResponse() {
@@ -296,6 +309,16 @@ void handleSerialResponse() {
     pinMode(LED[0], HIGH);
     pinMode(LED[1], LOW);
     pinMode(LED[2], LOW);
+  }
+  if (command == "o") {
+
+  }
+  if (command == "l") {
+    yGoTo = 0;
+    xGoTo = 0;
+  }
+  if (command == "c") {
+    onLocation = false;
   }
   command = "";
 }
