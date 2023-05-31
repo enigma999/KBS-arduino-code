@@ -4,7 +4,7 @@
 
 
 //global variables
-int size =0;
+int size = 0;
 int directionPin[] = { 12, 13 };
 int motorPin[] = { 3, 11 };
 int BrakePin[] = { 9, 8 };
@@ -241,6 +241,9 @@ void SerialDebugger() {
   Serial.println(Xpos);
   Serial.print("Ypos: ");
   Serial.println(Ypos);
+  Serial.println(command);
+  Serial.println(xGoTo);
+  Serial.println(yGoTo);
 }
 
 void readSerial() {
@@ -257,9 +260,6 @@ void readSerial() {
     } else {
       command = commandArr[0];
     }
-    Serial.println(command);
-    Serial.println(xGoTo);
-    Serial.println(yGoTo);
   }
 }
 
