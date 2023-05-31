@@ -236,9 +236,6 @@ void automaticLoop() {
       onLocation = true;
     }
   }
-  // if (yGoTo - 10 > Ypos) {
-  //     Serial.println("gelukt");
-  // }
 
 
   sendWire(wireMessage);
