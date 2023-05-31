@@ -174,11 +174,19 @@ void manualLoop() {
   String wireMessage = "";
   //X
   if (joystickX < 400) {
-    digitalWrite(directionPin[0], HIGH);
-    digitalWrite(motorPin[0], HIGH);
+    if (Xpos > -5) {
+      digitalWrite(directionPin[0], HIGH);
+      digitalWrite(motorPin[0], HIGH);
+    } else {
+      digitalWrite(motorPin[0], LOW);
+    }
   } else if (joystickX > 800) {
-    digitalWrite(directionPin[0], LOW);
-    digitalWrite(motorPin[0], HIGH);
+      if (Xpos < 4750) {
+      digitalWrite(directionPin[0], LOW);
+      digitalWrite(motorPin[0], HIGH);
+    } else {
+      digitalWrite(motorPin[0], LOW);
+    }
   } else {
     digitalWrite(motorPin[0], LOW);
   }
@@ -239,7 +247,6 @@ void automaticLoop() {
 
 
   sendWire(wireMessage);
-  
 }
 
 void handleWireResponse() {
@@ -308,7 +315,6 @@ void handleSerialResponse() {
     pinMode(LED[2], LOW);
   }
   if (command == "o") {
-
   }
   if (command == "l") {
     yGoTo = 0;
