@@ -9,7 +9,7 @@ int motorCurrentPin[] = { A1, A0 };
 int YmovementPin = 2;
 int sensorPin = A2;
 String command;
-bool debug = false;
+bool debug = true;
 int Ypos = 0;
 int Zpos = 0;
 enum modes {
@@ -179,6 +179,7 @@ int readSensor() {
 void SerialDebugger() {
   if (command.length() > 0) {
     Serial.println(command);
+    Serial.println(Ypos);
   }
 }
 

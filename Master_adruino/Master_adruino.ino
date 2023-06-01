@@ -20,9 +20,11 @@ int xGoTo;
 int yGoTo;
 int offsetX = 1750;  // offset from the start of the rail  to the middle of the first cell
 int cellwidth = 710;
-int offsetY = 180;  // offset from the bottom to the pickuphight for the first pakkage
+int offsetY = 250;  // offset from the bottom to the pickuphight for the first pakkage
 int cellHeight = 510;
 bool debug = false;
+bool Zactive = false;
+int lastjoystickmode;
 String wireResponse;
 String command;
 enum modes {
@@ -31,11 +33,28 @@ enum modes {
   AUTO
 };
 modes mode = MAN;
+enum direction {
+  HOLD,
+  LEFT,
+  RIGHT,
+  UP,
+  DOWN,
+  IN,
+  OUT
+
+};
+
 
 void setup() {
   //Initialize I2C
   Wire.begin(1);
   Wire.onReceive(receiveEvent);
+
+  pinMode(7, INPUT_PULLUP);
+  // //reset slave
+  // pinMode(7, OUTPUT);
+  // digitalWrite(7, LOW);
+  // digitalWrite(7, HIGH);
 
   //Initialize serial
   Serial.begin(9600);
@@ -116,20 +135,20 @@ void loop() {
   //read joystick input
   joystickY = analogRead(A3);
   joystickX = analogRead(A2);
+  ModeLED(mode);
+
+
 
   switch (mode) {
     case STOP:
-      ModeLED(3);
       stopLoop();
       break;
 
     case MAN:
-      ModeLED(2);
       manualLoop();
       break;
 
     case AUTO:
-      ModeLED(1);
       automaticLoop();
       break;
 
@@ -143,19 +162,19 @@ void loop() {
   }
 }
 
-void ModeLED(int modeNumber) {
-  switch (modeNumber) {
-    case 1:
+void ModeLED(modes mode) {
+  switch (mode) {
+    case AUTO:
       digitalWrite(LED[0], HIGH);
       digitalWrite(LED[1], LOW);
       digitalWrite(LED[2], LOW);
       break;
-    case 2:
+    case MAN:
       digitalWrite(LED[0], LOW);
       digitalWrite(LED[1], HIGH);
       digitalWrite(LED[2], LOW);
       break;
-    case 3:
+    case STOP:
       digitalWrite(LED[0], LOW);
       digitalWrite(LED[1], LOW);
       digitalWrite(LED[2], HIGH);
@@ -171,82 +190,65 @@ void stopLoop() {
 
 void manualLoop() {
   //dit is de mode voor handmatige besturing
-  String wireMessage = "";
+  if (digitalRead(7) == HIGH && !(lastjoystickmode == HIGH)) {
+    lastjoystickmode = HIGH;
+    Zactive = !Zactive;
+    Serial.println("check");
+    Serial.println(Zactive);
+  } else if (digitalRead(7) == LOW) {
+    lastjoystickmode = LOW;
+  }
   //X
-  if (joystickX < 400) {
-    if (Xpos > -5) {
-      digitalWrite(directionPin[0], HIGH);
-      digitalWrite(motorPin[0], HIGH);
-    } else {
-      digitalWrite(motorPin[0], LOW);
-    }
-  } else if (joystickX > 800) {
-      if (Xpos < 4750) {
-      digitalWrite(directionPin[0], LOW);
-      digitalWrite(motorPin[0], HIGH);
-    } else {
-      digitalWrite(motorPin[0], LOW);
-    }
-  } else {
-    digitalWrite(motorPin[0], LOW);
-  }
-  //Y
   if (joystickY < 400) {
-    wireMessage.concat("Y-");
+    moveX(LEFT);
   } else if (joystickY > 800) {
-    wireMessage.concat("Y+");
+    moveX(RIGHT);
   } else {
-    wireMessage.concat("YS");
+    moveX(HOLD);
   }
-  // Z
-  // if (joystickX < 400) {
-  //   wireMessage.concat("Z-");
-  // } else if (joystickX > 800) {
-  //   wireMessage.concat("Z+");
-  // } else {
-  //   wireMessage.concat("ZS");
-  // }
-  wireMessage.concat("ZS");
-  sendWire(wireMessage);
+  //Y/Z
+  if (joystickX < 400) {
+    moveY(UP);
+  } else if (joystickX > 800) {
+    moveY(DOWN);
+  } else {
+    moveY(HOLD);
+  }
 }
 
 void automaticLoop() {
-  String wireMessage = "";
+
   //X
   if (xGoTo - 10 > Xpos) {
-    digitalWrite(directionPin[0], LOW);
-    digitalWrite(motorPin[0], HIGH);
+    moveX(RIGHT);
   } else if (xGoTo + 10 < Xpos) {
-    digitalWrite(directionPin[0], HIGH);
-    digitalWrite(motorPin[0], HIGH);
+    moveX(LEFT);
   } else {
-    digitalWrite(motorPin[0], LOW);
+    moveX(HOLD);
   }
-  //Y
+  //Y/Z
   if (yGoTo - 10 > Ypos) {
-    wireMessage.concat("Y+");
+    moveY(DOWN);
   } else if (yGoTo + 10 < Ypos) {
-    wireMessage.concat("Y-");
+    moveY(UP);
   } else {
-    wireMessage.concat("YS");
+    moveY(HOLD);
   }
-  //Z
-  if (joystickX < 400) {
-    wireMessage.concat("Z-");
-  } else if (joystickX > 800) {
-    wireMessage.concat("Z+");
-  } else {
-    wireMessage.concat("ZS");
-  }
-  if ((abs(yGoTo - Ypos) <= 10) && (abs(xGoTo - Xpos) <= 10)) {
+  if ((!(xGoTo - 10 > Xpos) && !(xGoTo + 10 < Xpos) && !(yGoTo - 10 > Ypos) && !(yGoTo + 10 < Ypos))) {
     if (!onLocation) {
+      Zactive = false;
+      moveX(HOLD);
+      moveY(HOLD);
+      delay(1200);
+      moveY(DOWN);
+      delay(300);
+      Zactive = true;
+      moveY(HOLD);
+      delay(1200);
       Serial.println("Gelukt");
       onLocation = true;
     }
   }
-
-
-  sendWire(wireMessage);
 }
 
 void handleWireResponse() {
@@ -298,23 +300,12 @@ void handleSerialResponse() {
   //leest de command variable en handelt deze af
   if (command == "n") {
     mode = STOP;
-    pinMode(LED[0], LOW);
-    pinMode(LED[1], LOW);
-    pinMode(LED[2], HIGH);
   }
   if (command == "h") {
     mode = MAN;
-    pinMode(LED[0], LOW);
-    pinMode(LED[1], HIGH);
-    pinMode(LED[2], LOW);
   }
   if (command == "a") {
     mode = AUTO;
-    pinMode(LED[0], HIGH);
-    pinMode(LED[1], LOW);
-    pinMode(LED[2], LOW);
-  }
-  if (command == "o") {
   }
   if (command == "l") {
     yGoTo = 0;
@@ -343,4 +334,66 @@ int calculateYpos(int coordinaat) {
   //geeft de encoder Ypositie voor een gegeven coordinaat
   int positie = offsetY + (cellHeight * (coordinaat));
   return positie;
+}
+
+void moveX(direction direction) {
+  if (Zactive == true) {
+    switch (direction) {
+      case LEFT:
+        if (Xpos > -5) {
+          digitalWrite(directionPin[0], HIGH);
+          digitalWrite(motorPin[0], HIGH);
+        } else {
+          digitalWrite(motorPin[0], LOW);
+        }
+        break;
+      case RIGHT:
+        if (Xpos < 4750) {
+          digitalWrite(directionPin[0], LOW);
+          digitalWrite(motorPin[0], HIGH);
+        } else {
+          digitalWrite(motorPin[0], LOW);
+        }
+        break;
+      case STOP:
+        digitalWrite(motorPin[0], LOW);
+        break;
+    }
+  } else {
+    digitalWrite(motorPin[0], LOW);
+  }
+}
+
+void moveY(direction direction) {
+  String wireMessage = "";
+
+
+
+  switch (direction) {
+    case UP:
+      if (Ypos > -30) {
+        wireMessage.concat("Y-");
+      } else {
+        wireMessage.concat("YS");
+      }
+      break;
+    case DOWN:
+      if (Ypos < 2800) {
+        wireMessage.concat("Y+");
+      } else {
+        wireMessage.concat("YS");
+      }
+      break;
+    case HOLD:
+      wireMessage.concat("YS");
+      break;
+  }
+  if (Zactive == true) {
+    wireMessage.concat("Z-");
+
+  } else {
+
+    wireMessage.concat("Z+");
+  }
+  sendWire(wireMessage);
 }
