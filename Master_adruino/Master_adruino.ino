@@ -53,10 +53,7 @@ void setup() {
 
   pinMode(7, INPUT_PULLUP);
   pinMode(10, INPUT);
-  //reset slave
-  pinMode(13, OUTPUT);
-  digitalWrite(13, LOW);
-  digitalWrite(13, HIGH);
+
 
   //Initialize serial
   Serial.begin(9600);
@@ -72,8 +69,12 @@ void setup() {
   //calibrate X
   calibrateX(motorPin[0], directionPin[0]);
 
-  xGoTo = calculateXpos(0);
-  yGoTo = calculateYpos(0);
+  xGoTo = 0;
+  yGoTo = 0;
+  //reset slave
+  pinMode(13, OUTPUT);
+  digitalWrite(13, LOW);
+  digitalWrite(13, HIGH);  
 }
 
 void receiveEvent(int howMany) {
@@ -118,9 +119,9 @@ void pinSetup() {
   //x as motor
   pinMode(motorPin[0], OUTPUT);
   pinMode(directionPin[0], OUTPUT);
-  pinMode(4,INPUT);
-  pinMode(5,INPUT);
-  pinMode(6,INPUT);
+  pinMode(4, INPUT);
+  pinMode(5, INPUT);
+  pinMode(6, INPUT);
 }
 
 void countpluse() {
@@ -340,6 +341,7 @@ void handleSerialResponse() {
     mode = AUTO;
   }
   if (command == "l") {
+    onLocation = false;
     done = false;
     yGoTo = 0;
     xGoTo = 0;
