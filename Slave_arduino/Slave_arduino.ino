@@ -31,8 +31,8 @@ void setup() {
 
   //Setup interrupt for Y 
   attachInterrupt(digitalPinToInterrupt(YmovementPin), countpluse, RISING);
-  calibrateY(motorPin[0], directionPin[0]);
   calibrateZ(motorPin[1], directionPin[1]);
+  calibrateY(motorPin[0], directionPin[0]);
 }
 
 void calibrateY(int motorPin, int dirPin) {

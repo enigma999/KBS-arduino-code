@@ -21,7 +21,7 @@ int yGoTo;
 int offsetX = 1750;  // offset from the start of the rail  to the middle of the first cell
 int cellwidth = 710;
 int offsetY = 250;  // offset from the bottom to the pickuphight for the first pakkage
-int cellHeight = 510;
+int cellHeight = 520;
 bool debug = false;
 bool Zactive = false;
 int lastjoystickmode;
@@ -51,10 +51,11 @@ void setup() {
   Wire.onReceive(receiveEvent);
 
   pinMode(7, INPUT_PULLUP);
-  // //reset slave
-  // pinMode(7, OUTPUT);
-  // digitalWrite(7, LOW);
-  // digitalWrite(7, HIGH);
+  pinMode(10, INPUT);
+  //reset slave
+  pinMode(13, OUTPUT);
+  digitalWrite(13, LOW);
+  digitalWrite(13, HIGH);
 
   //Initialize serial
   Serial.begin(9600);
@@ -193,8 +194,6 @@ void manualLoop() {
   if (digitalRead(7) == HIGH && !(lastjoystickmode == HIGH)) {
     lastjoystickmode = HIGH;
     Zactive = !Zactive;
-    Serial.println("check");
-    Serial.println(Zactive);
   } else if (digitalRead(7) == LOW) {
     lastjoystickmode = LOW;
   }
@@ -217,36 +216,44 @@ void manualLoop() {
 }
 
 void automaticLoop() {
-
-  //X
-  if (xGoTo - 10 > Xpos) {
-    moveX(RIGHT);
-  } else if (xGoTo + 10 < Xpos) {
-    moveX(LEFT);
-  } else {
-    moveX(HOLD);
-  }
-  //Y/Z
-  if (yGoTo - 10 > Ypos) {
-    moveY(DOWN);
-  } else if (yGoTo + 10 < Ypos) {
-    moveY(UP);
-  } else {
-    moveY(HOLD);
-  }
-  if ((!(xGoTo - 10 > Xpos) && !(xGoTo + 10 < Xpos) && !(yGoTo - 10 > Ypos) && !(yGoTo + 10 < Ypos))) {
-    if (!onLocation) {
-      Zactive = false;
+  if (!onLocation) {
+    //X
+    if (xGoTo - 10 > Xpos) {
+      moveX(RIGHT);
+    } else if (xGoTo + 10 < Xpos) {
+      moveX(LEFT);
+    } else {
       moveX(HOLD);
-      moveY(HOLD);
-      delay(1200);
+    }
+    //Y/Z
+    if (yGoTo - 10 > Ypos) {
       moveY(DOWN);
-      delay(300);
-      Zactive = true;
+    } else if (yGoTo + 10 < Ypos) {
+      moveY(UP);
+    } else {
       moveY(HOLD);
-      delay(1200);
-      Serial.println("Gelukt");
+    }
+    if ((!(xGoTo - 10 > Xpos) && !(xGoTo + 10 < Xpos) && !(yGoTo - 10 > Ypos) && !(yGoTo + 10 < Ypos))) {
       onLocation = true;
+      yGoTo = yGoTo + 200;
+      Zactive = false;
+    }
+  } else {
+    if (digitalRead(10) == HIGH) {
+      moveY(HOLD);
+      moveX(HOLD);
+    } else {  
+      if (yGoTo - 10 > Ypos) {
+        moveY(DOWN);
+      } else if (yGoTo + 10 < Ypos) {
+        moveY(UP);
+      } else {
+        moveY(HOLD);
+      }
+      if (!(yGoTo - 10 > Ypos) && !(yGoTo + 10 < Ypos)) {
+        Zactive = true;
+
+      }
     }
   }
 }
