@@ -8,7 +8,7 @@ int BrakePin[] = { 9, 8 };
 int motorCurrentPin[] = { A1, A0 };
 int YmovementPin = 2;
 int sensorPin = A2;
-String command;
+String command="";
 bool debug = true;
 int Ypos = 0;
 int Zpos = 0;

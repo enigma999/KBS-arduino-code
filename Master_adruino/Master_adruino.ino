@@ -10,7 +10,7 @@ int directionPin[] = { 12, 13 };
 int motorPin[] = { 3, 11 };
 int BrakePin[] = { 9, 8 };
 int motorCurrentPin[] = { A1, A0 };
-int LED[] = { 4, 5, 6 };
+int LED[] = { 8, 9, 11 };
 int XmovementPin = 2;
 int Xpos = 0;
 int Ypos = 0;
@@ -24,8 +24,9 @@ int offsetY = 250;  // offset from the bottom to the pickuphight for the first p
 int cellHeight = 520;
 bool debug = false;
 bool Zactive = false;
+bool done = true;
 int lastjoystickmode;
-String wireResponse;
+String wireResponse = "0";
 String command;
 enum modes {
   STOP,
@@ -117,6 +118,9 @@ void pinSetup() {
   //x as motor
   pinMode(motorPin[0], OUTPUT);
   pinMode(directionPin[0], OUTPUT);
+  pinMode(4,INPUT);
+  pinMode(5,INPUT);
+  pinMode(6,INPUT);
 }
 
 void countpluse() {
@@ -137,6 +141,15 @@ void loop() {
   joystickY = analogRead(A3);
   joystickX = analogRead(A2);
   ModeLED(mode);
+  if (digitalRead(4) == HIGH) {
+    mode = STOP;
+  }
+  if (digitalRead(5) == HIGH) {
+    mode = MAN;
+  }
+  if (digitalRead(6) == HIGH) {
+    mode = AUTO;
+  }
 
 
 
@@ -216,33 +229,17 @@ void manualLoop() {
 }
 
 void automaticLoop() {
-  if (!onLocation) {
-    //X
-    if (xGoTo - 10 > Xpos) {
-      moveX(RIGHT);
-    } else if (xGoTo + 10 < Xpos) {
-      moveX(LEFT);
-    } else {
-      moveX(HOLD);
-    }
-    //Y/Z
-    if (yGoTo - 10 > Ypos) {
-      moveY(DOWN);
-    } else if (yGoTo + 10 < Ypos) {
-      moveY(UP);
-    } else {
-      moveY(HOLD);
-    }
-    if ((!(xGoTo - 10 > Xpos) && !(xGoTo + 10 < Xpos) && !(yGoTo - 10 > Ypos) && !(yGoTo + 10 < Ypos))) {
-      onLocation = true;
-      yGoTo = yGoTo + 200;
-      Zactive = false;
-    }
-  } else {
-    if (digitalRead(10) == HIGH) {
-      moveY(HOLD);
-      moveX(HOLD);
-    } else {  
+  if (!done) {
+    if (!onLocation) {
+      //X
+      if (xGoTo - 10 > Xpos) {
+        moveX(RIGHT);
+      } else if (xGoTo + 10 < Xpos) {
+        moveX(LEFT);
+      } else {
+        moveX(HOLD);
+      }
+      //Y/Z
       if (yGoTo - 10 > Ypos) {
         moveY(DOWN);
       } else if (yGoTo + 10 < Ypos) {
@@ -250,9 +247,37 @@ void automaticLoop() {
       } else {
         moveY(HOLD);
       }
-      if (!(yGoTo - 10 > Ypos) && !(yGoTo + 10 < Ypos)) {
-        Zactive = true;
+      if ((!(xGoTo - 10 > Xpos) && !(xGoTo + 10 < Xpos) && !(yGoTo - 10 > Ypos) && !(yGoTo + 10 < Ypos))) {
+        onLocation = true;
+        yGoTo = yGoTo + 200;
+        Zactive = false;
+      }
+    } else {
+      if (Zactive == false) {
+        if (digitalRead(10) == HIGH) {
+          moveY(HOLD);
+          moveX(HOLD);
+        } else {
 
+          if (yGoTo - 10 > Ypos) {
+            moveY(DOWN);
+          } else if (yGoTo + 10 < Ypos) {
+            moveY(UP);
+          } else {
+            moveY(HOLD);
+          }
+          if (!(yGoTo - 10 > Ypos) && !(yGoTo + 10 < Ypos)) {
+            Zactive = true;
+            moveY(HOLD);
+            moveX(HOLD);
+          }
+        }
+      } else {
+        if (!(digitalRead(10) == HIGH)) {
+          Serial.println("gelukt");
+          onLocation = false;
+          done = true;
+        }
       }
     }
   }
@@ -315,11 +340,13 @@ void handleSerialResponse() {
     mode = AUTO;
   }
   if (command == "l") {
+    done = false;
     yGoTo = 0;
     xGoTo = 0;
   }
   if (command == "c") {
     onLocation = false;
+    done = false;
   }
   command = "";
 }
