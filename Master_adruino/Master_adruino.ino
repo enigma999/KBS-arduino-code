@@ -274,7 +274,7 @@ void automaticLoop() {
         }
       } else {
         if (!(digitalRead(10) == HIGH)) {
-          Serial.println("gelukt");
+          Serial.println("Gelukt");
           onLocation = false;
           done = true;
         }
