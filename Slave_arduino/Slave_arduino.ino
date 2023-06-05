@@ -8,8 +8,8 @@ int BrakePin[] = { 9, 8 };
 int motorCurrentPin[] = { A1, A0 };
 int YmovementPin = 2;
 int sensorPin = A2;
-String command;
-bool debug = false;
+String command="";
+bool debug = true;
 int Ypos = 0;
 int Zpos = 0;
 enum modes {
@@ -31,8 +31,8 @@ void setup() {
 
   //Setup interrupt for Y 
   attachInterrupt(digitalPinToInterrupt(YmovementPin), countpluse, RISING);
-  calibrateY(motorPin[0], directionPin[0]);
   calibrateZ(motorPin[1], directionPin[1]);
+  calibrateY(motorPin[0], directionPin[0]);
 }
 
 void calibrateY(int motorPin, int dirPin) {
@@ -179,6 +179,7 @@ int readSensor() {
 void SerialDebugger() {
   if (command.length() > 0) {
     Serial.println(command);
+    Serial.println(Ypos);
   }
 }
 
